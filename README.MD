@@ -1,5 +1,5 @@
 
-![](static/logo.png)
+![](static/logo.png) | width=100
 # KubeAIWhisperer
 
 Welcome to KubeAIWhisperer, your ultimate Kubernetes deployment monitoring tool empowered by OpenAI. 

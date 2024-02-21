@@ -1,5 +1,5 @@
+<img src="https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/logo.png?raw=true" width="48">
 
-![](https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/logo.png?raw=true | width=100) 
 # KubeAIWhisperer
 
 Welcome to KubeAIWhisperer, your ultimate Kubernetes deployment monitoring tool empowered by OpenAI. 

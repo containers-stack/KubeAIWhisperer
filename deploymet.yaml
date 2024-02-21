@@ -61,16 +61,16 @@ kind: ConfigMap
 metadata:
   name: kubeaiwhisperer-config
 data:
-  AZURE_OPENAAI_ENDPOINT: "https://moti-openai-demo.openai.azure.com/"
-  AZURE_OPENAI_API_KEY: "753eaa7db03549e2a15c3afd22bc4af7"
-  AZURE_OPENAI_VERSION: "2024-02-15-preview"
-  AZURE_OPENAI_DEPLOYMENT_NAME: "moti-openai-demo"
-  MODEL_NAME: "gpt-35-turbo"
-  MAX_TOKENS: "2000"
-  MONGODB_URI: "mongodb+srv://admin:4Py6dSzNXpuJQyTs@kubeaiwhisperer.d6dp9py.mongodb.net/?retryWrites=true&w=majority&appName=kubeaiwhisperer"
-  SCAN_INTERVAL_SECONDS: "600"
-  LIST_NAMESPACE: "default,test"
-  ENVIRONMENT: "incluster"
+  AZURE_OPENAAI_ENDPOINT: ""
+  AZURE_OPENAI_API_KEY: ""
+  AZURE_OPENAI_VERSION: ""
+  AZURE_OPENAI_DEPLOYMENT_NAME: ""
+  MODEL_NAME: ""
+  MAX_TOKENS: ""
+  MONGODB_URI: ""
+  SCAN_INTERVAL_SECONDS: ""
+  LIST_NAMESPACE: ""
+  ENVIRONMENT: ""
 ---
 apiVersion: v1
 kind: Service

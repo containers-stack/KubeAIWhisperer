@@ -1,3 +1,5 @@
+
+![](static/logo.png)
 # KubeAIWhisperer
 
 Welcome to KubeAIWhisperer, your ultimate Kubernetes deployment monitoring tool empowered by OpenAI. 

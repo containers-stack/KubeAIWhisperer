@@ -1,0 +1,6 @@
+fastapi
+kubernetes
+openai
+python-dotenv
+pymongo
+pydantic

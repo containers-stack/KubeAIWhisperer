@@ -1,0 +1,210 @@
+from fastapi import FastAPI
+from kubernetes import client, config
+import datetime
+import datetime
+from openai import AzureOpenAI
+from dotenv import load_dotenv
+import os
+from pymongo import MongoClient
+import json
+import pydantic
+from bson import ObjectId
+pydantic.json.ENCODERS_BY_TYPE[ObjectId]=str
+
+ # Load variables from .env file
+load_dotenv() 
+
+# validate that all the required environment variables are set
+required_env_vars = [
+    "AZURE_OPENAAI_ENDPOINT",
+    "AZURE_OPENAI_API_KEY",
+    "AZURE_OPENAI_VERSION",
+    "AZURE_OPENAI_DEPLOYMENT_NAME",
+    "MODEL_NAME",
+    "MAX_TOKENS",
+    "MONGODB_URI",
+    "SCAN_INTERVAL_SECONDS",
+    "LIST_NAMESPACE"
+]
+
+for env_var in required_env_vars:
+    if env_var not in os.environ:
+        raise ValueError(f"Environment variable {env_var} is not set")
+
+# configure the openai client
+azure_endpoint = os.getenv("AZURE_OPENAAI_ENDPOINT")
+azure_openai_key = os.getenv("AZURE_OPENAI_API_KEY")
+azure_openai_version = os.getenv("AZURE_OPENAI_VERSION")
+azure_openai_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+openai_client    = AzureOpenAI(
+  azure_endpoint    = azure_endpoint,
+  api_key           = azure_openai_key,
+  api_version       = azure_openai_version
+)
+
+# configure the kubernetes client
+config.load_kube_config()
+
+# configure the mongodb client using user and password
+mongodb_client = MongoClient(os.getenv("MONGODB_URI"))
+
+# check if the database recommendations exists, if not create it
+if "recommendations" in mongodb_client.list_database_names():
+    print("Database recommendations exists")
+else:
+    print("Database recommendations does not exist, creating it")
+    db = mongodb_client["recommendations"]
+    # create a collection called recommendations
+    collection = db["recommendations"]
+    print("Collection recommendations has been created")
+
+app = FastAPI()
+
+PROMPT_TEMPLATE = """
+    You are a professional DevOps engineer assistant, aiding the DevOps team in optimizing their Kubernetes cluster.
+
+    Your role:
+    - Analyze provided manifest files.
+    - Offer recommendations aligned with industry best practices.
+
+    {
+    "Recommendations": [
+        {
+        "Deployment": "",
+        "Namespace": "",
+        "Title": "",
+        "Category": "",
+        "Severity": "",
+        "Description": "",
+        "Implementation": "<AN EXAMPLE OF THE YAML CODE, HOW TO IMPLEMENT THIS RECOMMENDATION, ENTER ONLY THE SPECIFIC PART OF THE CODE THAT IS RELEVANT TO THE RECOMMENDATION, NOT THE ENTIRE YAML>"
+        }
+    ],
+    "IMPORTANT": [
+        "Replay only the JSON object with the recommendations; do not include any other information.",
+        "Do not include any explanations; only provide an RFC8259 compliant JSON response following this format without deviation.",
+        "Do not include ```json in the beginning or end of the response.",
+        "Do not include ``` in the end of the response.",
+        "Provide at least 5 recommendations for each category (Security, Scalability, Reliability, Best Practices, Cost Optimization, Misconfiguration)."
+    ]
+    }
+    """
+
+# function to save the recommendations to the database
+def save_recommendations_to_db(recommendations):
+    # get the database
+    db = mongodb_client["recommendations"]
+    # create a collection called recommendations
+    collection = db["recommendations"]
+    
+    data_to_insert = json.loads(recommendations.choices[0].message.content)
+
+    # loop through the recommendations and insert them to the database
+    for recommendation in data_to_insert["Recommendations"]:
+        # add datetime to the recommendation
+        recommendation["ScanTime"] = datetime.datetime.now()
+        # insert the recommendations to the database
+        collection.insert_one(recommendation)
+
+    # insert the recommendations to the database
+    collection.insert_one(data_to_insert)
+    print("Recommendations have been saved to the database")
+
+# function to analyze the resource
+def analyze_resource(resource):
+    message_text = [
+        {
+            "role": "system",
+            "content": PROMPT_TEMPLATE
+        },
+        {
+            "role": "user",
+            "content": "Here the manifest file for the resource please provide recommendations: \n" + resource
+        }
+    ]
+    completion = openai_client.chat.completions.create(
+            model=os.getenv("MODEL_NAME"),
+            messages = message_text,
+            temperature=0.7,
+            max_tokens=int(os.getenv("MAX_TOKENS")),
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None
+            )
+
+    # save the recommendations to the database
+    save_recommendations_to_db(completion)
+    print("Recommendations have been saved to the database")
+
+# health check
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+# controller to get all the recommendations from the database
+@app.get("/get-recommendations")
+async def get_recommendations():
+    try:
+        # get the database
+        db = mongodb_client["recommendations"]
+        # create a collection called recommendations
+        collection = db["recommendations"]
+        # get all the recommendations from the database
+        recommendations = list(collection.find())  # Convert to list
+        recommendations_list = []
+        for recommendation in recommendations:
+            recommendations_list.append(recommendation)
+        return {"status": "ok", "recommendations": recommendations}, 200
+    except Exception as e:
+        print(f"Error: {e}")
+        # return error message with status code 500
+        return {"status": "error", "message": str(e)}, 500
+
+# dlete all the recommendations from the database
+@app.get("/delete-recommendations")
+async def delete_recommendations():
+    try:
+        # get the database
+        db = mongodb_client["recommendations"]
+        # create a collection called recommendations
+        collection = db["recommendations"]
+        # delete all the recommendations from the database
+        collection.delete_many({})
+        return {"status": "ok", "message": "All recommendations have been deleted"}, 200
+    except Exception as e:
+        print(f"Error: {e}")
+        # return error message with status code 500
+        return {"status": "error", "message": str(e)}, 500
+
+# watch deployment and write to file when changed
+@app.get("/watch-deployment")
+async def watch_deployment():
+
+    try:
+        print("Watching deployment")
+        # Create an instance of the CoreV1Api class
+        v1 = client.AppsV1Api()
+
+        for namespace in os.getenv("LIST_NAMESPACE").split(","):            
+            ret = v1.list_namespaced_deployment(namespace=namespace, watch=False).to_dict()
+            for i in ret['items']:
+                last_update = str(i['metadata']['creation_timestamp'])
+                last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S%z')
+                now = datetime.datetime.now(datetime.timezone.utc)
+                diff = now - last_update
+                if diff.seconds < int(os.getenv("SCAN_INTERVAL_SECONDS")):
+                    analyze_resource(str(i))
+                    print(f"Deployment {i['metadata']['name']} has been created in the last 5 minutes")
+                else:
+                    print(f"Deployment {i['metadata']['name']} has not been created in the last 5 minutes")
+
+            return {"status": "ok"}, 200
+    except Exception as e:
+        print(f"Error: {e}")
+        # return error message with status code 500
+        return {"status": "error", "message": str(e)}, 500
+
+# start the application
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000)

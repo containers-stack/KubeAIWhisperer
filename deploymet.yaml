@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeaiwhisperer-sa
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeaiwhisperer-cluster-role
+rules:
+- apiGroups: ["", "apps"]
+  resources: ["namespaces", "deployments"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeaiwhisperer-cluster-role-binding
+subjects:
+- kind: ServiceAccount
+  name: kubeaiwhisperer-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: kubeaiwhisperer-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeaiwhisperer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubeaiwhisperer
+  template:
+    metadata:
+      labels:
+        app: kubeaiwhisperer
+    spec:
+      serviceAccountName: kubeaiwhisperer-sa
+      containers:
+      - name: kubeaiwhisperer
+        image: motiio/kubeaiwhisperer:6
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: kubeaiwhisperer-config
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+        
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubeaiwhisperer-config
+data:
+  AZURE_OPENAAI_ENDPOINT: "https://moti-openai-demo.openai.azure.com/"
+  AZURE_OPENAI_API_KEY: "753eaa7db03549e2a15c3afd22bc4af7"
+  AZURE_OPENAI_VERSION: "2024-02-15-preview"
+  AZURE_OPENAI_DEPLOYMENT_NAME: "moti-openai-demo"
+  MODEL_NAME: "gpt-35-turbo"
+  MAX_TOKENS: "2000"
+  MONGODB_URI: "mongodb+srv://admin:4Py6dSzNXpuJQyTs@kubeaiwhisperer.d6dp9py.mongodb.net/?retryWrites=true&w=majority&appName=kubeaiwhisperer"
+  SCAN_INTERVAL_SECONDS: "600"
+  LIST_NAMESPACE: "default,test"
+  ENVIRONMENT: "incluster"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeaiwhisperer-service
+spec:
+  selector:
+    app: kubeaiwhisperer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer

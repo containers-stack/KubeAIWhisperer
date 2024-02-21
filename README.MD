@@ -33,30 +33,30 @@ To deploy KubeAIWhisperer, follow these steps:
 1. Update the deployment.yaml file with the necessary values under the configmap section. Ensure to replace placeholders with actual values:
    ```yaml
       apiVersion: v1
-      kind: ConfigMap
-      metadata:
-      name: kubeaiwhisperer-config
-      data:
-      # AzureOpenAI endpoint URL
-      AZURE_OPENAI_ENDPOINT: ""  
-      # AzureOpenAI API key
-      AZURE_OPENAI_API_KEY: ""
-      # AzureOpenAI version
-      AZURE_OPENAI_VERSION: ""
-      # AzureOpenAI deployment name
-      AZURE_OPENAI_DEPLOYMENT_NAME: ""
-      # Name of the model to be used
-      MODEL_NAME: ""
-      # Maximum tokens to generate
-      MAX_TOKENS: ""
-      # MongoDB connection URI
-      MONGODB_URI: ""
-      # Interval in seconds to scan for changes
-      SCAN_INTERVAL_SECONDS: ""
-      # Namespaces to list for monitoring
-      LIST_NAMESPACE: ""
-      # Environment type (incluster or external)
-      ENVIRONMENT: ""
+         kind: ConfigMap
+         metadata:
+            name: kubeaiwhisperer-config
+         data:
+            # AzureOpenAI endpoint URL
+            AZURE_OPENAI_ENDPOINT: ""  
+            # AzureOpenAI API key
+            AZURE_OPENAI_API_KEY: ""
+            # AzureOpenAI version
+            AZURE_OPENAI_VERSION: ""
+            # AzureOpenAI deployment name
+            AZURE_OPENAI_DEPLOYMENT_NAME: ""
+            # Name of the model to be used
+            MODEL_NAME: ""
+            # Maximum tokens to generate
+            MAX_TOKENS: ""
+            # MongoDB connection URI
+            MONGODB_URI: ""
+            # Interval in seconds to scan for changes
+            SCAN_INTERVAL_SECONDS: ""
+            # Namespaces to list for monitoring
+            LIST_NAMESPACE: ""
+            # Environment type (incluster or external)
+            ENVIRONMENT: ""
 
 2. Install the deployment using:
    ```bash

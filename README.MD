@@ -32,6 +32,7 @@ To deploy KubeAIWhisperer, follow these steps:
 
 1. Update the deployment.yaml file with the necessary values under the configmap section. Ensure to replace placeholders with actual values:
    ```yaml
+      ---
       apiVersion: v1
          kind: ConfigMap
          metadata:
@@ -57,6 +58,7 @@ To deploy KubeAIWhisperer, follow these steps:
             LIST_NAMESPACE: ""
             # Environment type (incluster or external)
             ENVIRONMENT: ""
+      ---
 
 2. Install the deployment using:
    ```bash

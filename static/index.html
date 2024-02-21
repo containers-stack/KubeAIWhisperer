@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KubeAIWhisperer</title>
+    <style>
+        body {
+            background-color: #070707;
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: #1f2428;
+            color: #ccc7c7;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #dddddd;
+            color: #b2adad;
+        }
+
+        tr:hover {
+            background-color: #1f2428;
+        }
+
+        .button {
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100px;
+            height: 30px;
+            font-size: 16px;
+            margin-top: 30px;
+        }
+
+        .button:hover {
+            background-color: #218838;
+        }
+
+        .spinner {
+            display: none;
+            margin: 0 auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body style="padding: 40px;">
+
+    <div style="display: flex; justify-content: space-between;">
+        <img src="./logo.png" alt="" style="width: 100px; border-radius: 50%;">
+        <h1 style="text-align: center; margin: auto; color: #ebedef;">KubeAIWhisperer</h1>
+        <button class="button" onclick="getRecommendation()" id="refreshButton">Refresh</button>
+    </div>
+    <table style="margin-top: 30px;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Deployment</th>
+                <th>Namespace</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Severity</th>
+                <th>Description</th>
+                <th>Implementation</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="spinner"></div>
+
+    <script>
+        // the the api url to current window location
+        const apiUrl = window.location.origin;
+        function getRecommendation() {
+            const table = document.querySelector('table');
+            const spinner = document.querySelector('.spinner');
+
+            // Show spinner and hide table
+            spinner.style.display = 'block';
+            table.style.display = 'none';
+
+            // clear table body
+            document.querySelector('tbody').innerHTML = '';
+            fetch(`${apiUrl}/get-recommendations`)
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data
+                    const recommendations = data[0].recommendations;
+                    const tableBody = document.querySelector('tbody');
+                    i = 1;
+                    recommendations.forEach(recommendation => {
+                        const newRow = document.createElement('tr');
+                        newRow.innerHTML = `
+                            <td>${i}</td>
+                            <td>${recommendation.Deployment}</td>
+                            <td>${recommendation.Namespace}</td>
+                            <td>${recommendation.Title}</td>
+                            <td>${recommendation.Category}</td>
+                            <td>${recommendation.Severity}</td>
+                            <td>${recommendation.Description}</td>
+                            <td>${recommendation.Implementation}</td>
+                        `;
+                        tableBody.appendChild(newRow);
+                        i++;
+                    });
+
+                    // Hide spinner and show table
+                    spinner.style.display = 'none';
+                    table.style.display = 'table';
+                })
+                .catch(error => {
+                    // Handle any errors
+                    console.error(error);
+
+                    // Hide spinner and show table
+                    spinner.style.display = 'none';
+                    table.style.display = 'table';
+                });
+        };
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from kubernetes import client, config
 import datetime
 import datetime
@@ -7,10 +9,9 @@ from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
 import json
-import pydantic
-from bson import ObjectId
 
-pydantic.json.ENCODERS_BY_TYPE[ObjectId]=str
+# cors allow all
+from fastapi.middleware.cors import CORSMiddleware
 
  # Load variables from .env file
 load_dotenv() 
@@ -43,23 +44,39 @@ openai_client    = AzureOpenAI(
   api_version       = azure_openai_version
 )
 
-# configure the kubernetes client
-config.load_kube_config()
+if os.getenv("ENVIRONMENT") == "dev":
+    print("Running in dev environment")
+
+    # configure the kubernetes client
+    config.load_kube_config()
+if os.getenv("ENVIRONMENT") == "incluster":
+    print("Running in incluster environment")
+    # configure the kubernetes client
+    config.load_incluster_config()
 
 # configure the mongodb client using user and password
 mongodb_client = MongoClient(os.getenv("MONGODB_URI"))
 
 # check if the database recommendations exists, if not create it
-if "recommendations" in mongodb_client.list_database_names():
-    print("Database recommendations exists")
+if "KubeAIWhisperer" in mongodb_client.list_database_names():
+    print("Database KubeAIWhisperer exists")
 else:
-    print("Database recommendations does not exist, creating it")
-    db = mongodb_client["recommendations"]
+    print("Database KubeAIWhisperer does not exist, creating it")
+    db = mongodb_client["KubeAIWhisperer"]
     # create a collection called recommendations
     collection = db["recommendations"]
     print("Collection recommendations has been created")
 
 app = FastAPI()
+# add cors middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 PROMPT_TEMPLATE = """
     You are a professional DevOps engineer assistant, aiding the DevOps team in optimizing their Kubernetes cluster.
@@ -105,9 +122,6 @@ def save_recommendations_to_db(recommendations):
         recommendation["ScanTime"] = datetime.datetime.now()
         # insert the recommendations to the database
         collection.insert_one(recommendation)
-
-    # insert the recommendations to the database
-    collection.insert_one(data_to_insert)
     print("Recommendations have been saved to the database")
 
 # function to analyze the resource
@@ -142,6 +156,9 @@ def analyze_resource(resource):
 async def health():
     return {"status": "ok"}
 
+# serve the index.html from the static folder
+app.mount('/app', StaticFiles(directory='static', html=True), name='static')
+
 # controller to get all the recommendations from the database
 @app.get("/get-recommendations")
 async def get_recommendations():
@@ -151,9 +168,11 @@ async def get_recommendations():
         # create a collection called recommendations
         collection = db["recommendations"]
         # get all the recommendations from the database
-        recommendations = list(collection.find())  # Convert to list
+        recommendations = list(collection.find())
         recommendations_list = []
         for recommendation in recommendations:
+            # convert the ObjectId to string
+            recommendation["_id"] = str(recommendation["_id"])
             recommendations_list.append(recommendation)
         return {"status": "ok", "recommendations": recommendations}, 200
     except Exception as e:

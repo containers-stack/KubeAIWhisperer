@@ -8,6 +8,7 @@ Welcome to KubeAIWhisperer, your ultimate Kubernetes deployment monitoring tool 
 
 KubeAIWhisperer is designed to provide real-time insights and recommendations for optimizing your Kubernetes deployments. It leverages the latest advancements in AI to analyze your clusters and offer suggestions on security configurations, scaling strategies, and cost management. With KubeAIWhisperer, you can ensure your Kubernetes infrastructure is always performing at its best while minimizing risks and costs.
 
+<img src="https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/Screenshot.png" width="400" >
 ## Features
 
 - **Automatic Monitoring**: KubeAIWhisperer continuously monitors your Kubernetes deployments, detecting any changes or new deployments instantly.

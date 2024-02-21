@@ -30,4 +30,4 @@ KubeAIWhisperer is designed to provide real-time insights and recommendations fo
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/KubeAIWhisperer.git
+   git clone https://github.com/containers-stack/KubeAIWhisperer.git

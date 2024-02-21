@@ -9,6 +9,7 @@ from pymongo import MongoClient
 import json
 import pydantic
 from bson import ObjectId
+
 pydantic.json.ENCODERS_BY_TYPE[ObjectId]=str
 
  # Load variables from .env file

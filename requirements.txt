@@ -1,6 +1,7 @@
+uvicorn
 fastapi
 kubernetes
 openai
 python-dotenv
 pymongo
-pydantic
+pydantic==1.10.13

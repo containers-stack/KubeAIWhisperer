@@ -1,4 +1,6 @@
-<img src="https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/logo.png?raw=true" width="400" align="center">
+<p align="center">
+  <img src="https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/logo.png?raw=true" width="400">
+</p>
 
 # KubeAIWhisperer
 

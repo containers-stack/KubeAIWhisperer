@@ -3,7 +3,6 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from kubernetes import client, config
 import datetime
-import datetime
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 import os
@@ -42,7 +41,13 @@ openai_client    = AzureOpenAI(
   azure_endpoint    = azure_endpoint,
   api_key           = azure_openai_key,
   api_version       = azure_openai_version
+
+
 )
+
+# print all required_env_vars values to the console
+for env_var in required_env_vars:
+    print(f"{env_var}: {os.getenv(env_var)}")
 
 if os.getenv("ENVIRONMENT") == "dev":
     print("Running in dev environment")
@@ -180,6 +185,7 @@ async def get_recommendations():
         # return error message with status code 500
         return {"status": "error", "message": str(e)}, 500
 
+
 # dlete all the recommendations from the database
 @app.get("/delete-recommendations")
 async def delete_recommendations():
@@ -201,6 +207,8 @@ async def delete_recommendations():
 async def watch_deployment():
 
     try:
+        deployments_scanned = 0
+
         print("Watching deployment")
         # Create an instance of the CoreV1Api class
         v1 = client.AppsV1Api()
@@ -215,10 +223,14 @@ async def watch_deployment():
                 if diff.seconds < int(os.getenv("SCAN_INTERVAL_SECONDS")):
                     analyze_resource(str(i))
                     print(f"Deployment {i['metadata']['name']} has been created in the last 5 minutes")
+                    deployments_scanned += 1
                 else:
                     print(f"Deployment {i['metadata']['name']} has not been created in the last 5 minutes")
 
-            return {"status": "ok"}, 200
+            return {
+                "status": "ok",
+                "message": f"{deployments_scanned} Deployments has been scanned"
+                }, 200
     except Exception as e:
         print(f"Error: {e}")
         # return error message with status code 500

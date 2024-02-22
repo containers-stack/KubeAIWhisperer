@@ -5,9 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KubeAIWhisperer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body {
-            background-color: #070707;
+            background-color: rgb(49, 49, 49);
+            /* For browsers that do not support gradients */
+            
             color: #ffffff;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 16px;
@@ -17,6 +20,15 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            border-radius: .5rem;
+            background-color: #1f2428;
+            padding: 10px;
+
+        }
+
+        thead th,
+        tbody th {
+            color: #fff;
         }
 
         th {
@@ -25,20 +37,23 @@
             padding: 20px;
             text-align: center;
             font-size: 18px;
+            border-radius: 50%;
+
+        }
+
+        th:hover {
+            cursor: pointer;
         }
 
         td {
-            padding: 10px;
-            border-bottom: 1px solid #dddddd;
-            color: #b2adad;
+            padding: 10px;            
         }
 
         tr:hover {
-            background-color: #1f2428;
+            background-color: #454d53;
         }
 
         .button {
-            background-color: #28a745;
             color: #ffffff;
             border: none;
             cursor: pointer;
@@ -63,11 +78,38 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
 
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
             }
+
             100% {
                 transform: rotate(360deg);
             }
@@ -77,27 +119,60 @@
 
 <body style="padding: 40px;">
 
-    <div style="display: flex; justify-content: space-between;">
+    <div style="text-align: center;">
         <img src="./logo.png" alt="" style="width: 100px; border-radius: 50%;">
-        <h1 style="text-align: center; margin: auto; color: #ebedef;">KubeAIWhisperer</h1>
-        <button class="button" onclick="getRecommendation()" id="refreshButton">Refresh</button>
     </div>
-    <table style="margin-top: 30px;">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Deployment</th>
-                <th>Namespace</th>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Severity</th>
-                <th>Description</th>
-                <th>Implementation</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div style="display: flex; justify-content: space-between;">
+        <div>
+            <button class="button" style="background-color: #045875;" onclick="scanNow()" id="scanNow">Scan</button>
+            <button  class="button" style="background-color: #28a745;margin-left: 40px;" onclick="getRecommendation()" id="refreshButton">Refresh</button>
+        </div>
+        <button class="button" style="background-color: #bd1d1d;" onclick="deleteAll()" id="deleteAll">Delete All</button>
+        
+    </div>
+    <div>
+
+        <table style="margin-top: 30px;">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">
+                        #
+                    </th>
+                    <th onclick="sortTable(1)">
+                        <i class="fas fa-sort"></i>
+                        Deployment
+                    </th>
+                    <th onclick="sortTable(2)">
+                        <i class="fas fa-sort"></i>
+                        Namespace
+                    </th>
+                    <th onclick="sortTable(3)">
+                        <i class="fas fa-sort"></i>
+                        Title
+                    </th>
+                    <th onclick="sortTable(4)">
+                        <i class="fas fa-sort"></i>
+                        Category
+                    </th>
+                    <th onclick="sortTable(5)">
+                        <i class="fas fa-sort"></i>
+                        Severity
+                    </th>
+                    <th onclick="sortTable(6)">
+                        <i class="fas fa-sort"></i>
+                        Description
+                    </th>
+                    <th onclick="sortTable(7)">
+                        
+                        <i class="fas fa-sort"></i>
+                        Implementation
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 
     <div class="spinner"></div>
 
@@ -129,7 +204,7 @@
                             <td>${recommendation.Namespace}</td>
                             <td>${recommendation.Title}</td>
                             <td>${recommendation.Category}</td>
-                            <td>${recommendation.Severity}</td>
+                            <td><span class="badge ${getSeverityBadgeClass(recommendation.Severity)}">${recommendation.Severity}</span></td>
                             <td>${recommendation.Description}</td>
                             <td>${recommendation.Implementation}</td>
                         `;
@@ -149,7 +224,128 @@
                     spinner.style.display = 'none';
                     table.style.display = 'table';
                 });
-        };
+
+        }
+        
+        // function to get severity badge class
+        function getSeverityBadgeClass(severity) {
+                if (severity === 'High') {
+                    return 'badge-danger';
+                } else if (severity === 'Medium') {
+                    return 'badge-warning';
+                } else if (severity === 'Low') {
+                    return 'badge-success';
+                } else {
+                    return 'badge-secondary';
+                }
+            }
+
+        // function to sort table
+        function sortTable(n) {
+            var table,
+                rows,
+                switching,
+                i,
+                x,
+                y,
+                shouldSwitch,
+                dir,
+                switchcount = 0;
+            table = document.querySelector('table');
+            switching = true;
+            // Set the sorting direction to ascending:
+            dir = 'asc';
+            /* Make a loop that will continue until
+            no switching has been done: */
+            while (switching) {
+                // Start by saying: no switching is done:
+                switching = false;
+                rows = table.rows;
+                /* Loop through all table rows (except the
+                first, which contains table headers): */
+                for (i = 1; i < rows.length - 1; i++) {
+                    // Start by saying there should be no switching:
+                    shouldSwitch = false;
+                    /* Get the two elements you want to compare,
+                    one from current row and one from the next: */
+                    x = rows[i].getElementsByTagName('TD')[n];
+                    y = rows[i + 1].getElementsByTagName('TD')[n];
+                    /* Check if the two rows should switch place,
+                    based on the direction, asc or desc: */
+                    if (dir == 'asc') {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == 'desc') {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    /* If a switch has been marked, make the switch
+                    and mark that a switch has been done: */
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    // Each time a switch is done, increase this count by 1:
+                    switchcount++;
+                } else {
+                    /* If no switching has been done AND the direction is 'asc',
+                    set the direction to 'desc' and run the while loop again. */
+                    if (switchcount == 0 && dir == 'asc') {
+                        dir = 'desc';
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        // function to delete all recommendations
+        function deleteAll() {
+            if (confirm('Are you sure you want to delete all recommendations?')) {
+                fetch(`${apiUrl}/delete-recommendations`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        alert('All recommendations have been deleted');
+                        getRecommendation();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+        }
+
+        // function to scan deployments
+        function scanNow() {
+            // Show spinner and hide table
+            const spinner = document.querySelector('.spinner');
+            const table = document.querySelector('table');
+            spinner.style.display = 'block';
+            table.style.display = 'none';
+            debugger
+            fetch(`${apiUrl}/watch-deployment`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    alert(data[0].message)
+                    spinner.style.display = 'none';
+                    table.style.display = 'table';
+                    getRecommendation();
+
+                })
+                .catch(error => {
+                    console.error(error[0].message);
+                    spinner.style.display = 'none';
+                    table.style.display = 'table';
+                    alert('An error occurred while scanning deployments' + error.message)
+
+                });
+        }
     </script>
 </body>
 

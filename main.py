@@ -236,6 +236,29 @@ async def watch_deployment():
         # return error message with status code 500
         return {"status": "error", "message": str(e)}, 500
 
+
+# list all events from the namespace
+@app.get("/list-events")
+async def list_events():
+    try:
+        # Create an instance of the CoreV1Api class
+        v1 = client.CoreV1Api()
+        
+        events = []
+        # get all the events from the namespace
+        ret = v1.list_namespaced_event(namespace="default", watch=False).to_dict()
+
+        for event in ret['items']:
+            # if the event type is Normal, remove it from the list
+            if event['type'] != "Normal":
+                events.append(event)
+        return {"status": "ok", "events": events}, 200
+    except Exception as e:
+        print(f"Error: {e}")
+        # return error message with status code 500
+        return {"status": "error", "message": str(e)}, 500
+
+
 # start the application
 if __name__ == "__main__":
     import uvicorn

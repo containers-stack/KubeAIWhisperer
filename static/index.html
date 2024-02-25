@@ -8,12 +8,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body {
-            background-color: rgb(49, 49, 49);
+            background-color: #1f2428;
             /* For browsers that do not support gradients */
-            
+
             color: #ffffff;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 16px;
+        }
+
+        li {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #045875;
+            color: #ffffff;
+            border-radius: 5px 5px 0 0;
         }
 
         table {
@@ -37,7 +46,7 @@
             padding: 20px;
             text-align: center;
             font-size: 18px;
-            border-radius: 50%;
+
 
         }
 
@@ -46,7 +55,7 @@
         }
 
         td {
-            padding: 10px;            
+            padding: 10px;
         }
 
         tr:hover {
@@ -78,6 +87,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+
         .badge {
             padding: 5px 10px;
             border-radius: 5px;
@@ -119,66 +129,83 @@
 
 <body style="padding: 40px;">
 
+    <ul class="tabs">
+        <li class="recommendations" onclick="showTab('recommendations')">Recommendations</li>
+        <li class="events" onclick="showTab('events')">Events</li>
+        <li class="compliance" onclick="showTab('compliance')">Compliance Checks</li>
+    </ul>
+
     <div style="text-align: center;">
         <img src="./logo.png" alt="" style="width: 100px; border-radius: 50%;">
     </div>
     <div style="display: flex; justify-content: space-between;">
         <div>
-            <button class="button" style="background-color: #045875;" onclick="scanNow()" id="scanNow">Scan</button>
-            <button  class="button" style="background-color: #28a745;margin-left: 40px;" onclick="getRecommendation()" id="refreshButton">Refresh</button>
+            <button class="button" style="background-color: #045875;" onclick="scanNow()" id="scanNow">Scan Now</button>
+            <button class="button" style="background-color: #28a745;margin-left: 40px;" onclick="getRecommendation()"
+                id="refreshButton">Refresh</button>
         </div>
-        <button class="button" style="background-color: #bd1d1d;" onclick="deleteAll()" id="deleteAll">Delete All</button>
+        <button class="button" style="background-color: #bd1d1d;" onclick="deleteAll()" id="deleteAll">Delete
+            All</button>
+
+    </div>
+
+    <!-- Add a PIE chart graph using chart.js -->
+
+    <div style="overflow: auto; max-height: 500px; margin-top: 30px;">
+        <div id="recommendations" class="tab-content">
+            <table style="margin-top: 30px;">
+                <thead style="position: sticky; top: 0;">
+                    <tr>
+                        <th onclick="sortTable(0)">
+                            #
+                        </th>
+                        <th onclick="sortTable(1)">
+                            <i class="fas fa-sort"></i>
+                            Deployment
+                        </th>
+                        <th onclick="sortTable(2)">
+                            <i class="fas fa-sort"></i>
+                            Namespace
+                        </th>
+                        <th onclick="sortTable(3)">
+                            <i class="fas fa-sort"></i>
+                            Title
+                        </th>
+                        <th onclick="sortTable(4)">
+                            <i class="fas fa-sort"></i>
+                            Category
+                        </th>
+                        <th onclick="sortTable(5)">
+                            <i class="fas fa-sort"></i>
+                            Severity
+                        </th>
+                        <th onclick="sortTable(6)">
+                            <i class="fas fa-sort"></i>
+                            Description
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="events" class="tab-content" style="display: none;">
         
     </div>
-    <div>
-
-        <table style="margin-top: 30px;">
-            <thead>
-                <tr>
-                    <th onclick="sortTable(0)">
-                        #
-                    </th>
-                    <th onclick="sortTable(1)">
-                        <i class="fas fa-sort"></i>
-                        Deployment
-                    </th>
-                    <th onclick="sortTable(2)">
-                        <i class="fas fa-sort"></i>
-                        Namespace
-                    </th>
-                    <th onclick="sortTable(3)">
-                        <i class="fas fa-sort"></i>
-                        Title
-                    </th>
-                    <th onclick="sortTable(4)">
-                        <i class="fas fa-sort"></i>
-                        Category
-                    </th>
-                    <th onclick="sortTable(5)">
-                        <i class="fas fa-sort"></i>
-                        Severity
-                    </th>
-                    <th onclick="sortTable(6)">
-                        <i class="fas fa-sort"></i>
-                        Description
-                    </th>
-                    <th onclick="sortTable(7)">
-                        
-                        <i class="fas fa-sort"></i>
-                        Implementation
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    <div id="compliance" class="tab-content" style="display: none;">
+        
     </div>
 
     <div class="spinner"></div>
 
     <script>
-        // the the api url to current window location
+
         const apiUrl = window.location.origin;
+
+        getRecommendation();
+
         function getRecommendation() {
             const table = document.querySelector('table');
             const spinner = document.querySelector('.spinner');
@@ -199,16 +226,20 @@
                     recommendations.forEach(recommendation => {
                         const newRow = document.createElement('tr');
                         newRow.innerHTML = `
-                            <td>${i}</td>
-                            <td>${recommendation.Deployment}</td>
-                            <td>${recommendation.Namespace}</td>
-                            <td>${recommendation.Title}</td>
-                            <td>${recommendation.Category}</td>
-                            <td><span class="badge ${getSeverityBadgeClass(recommendation.Severity)}">${recommendation.Severity}</span></td>
-                            <td>${recommendation.Description}</td>
-                            <td>${recommendation.Implementation}</td>
-                        `;
+                                    <td>${i}</td>
+                                    <td>${recommendation.Deployment}</td>
+                                    <td>${recommendation.Namespace}</td>
+                                    <td>${recommendation.Title}</td>
+                                    <td>${recommendation.Category}</td>
+                                    <td><span class="badge ${getSeverityBadgeClass(recommendation.Severity)}">${recommendation.Severity}</span></td>
+                                    <td>${recommendation.Description}</td>
+                                    
+                                `;
                         tableBody.appendChild(newRow);
+
+                        // update the chart
+                        const chart = document.getElementById('chart');
+
                         i++;
                     });
 
@@ -226,19 +257,19 @@
                 });
 
         }
-        
+
         // function to get severity badge class
         function getSeverityBadgeClass(severity) {
-                if (severity === 'High') {
-                    return 'badge-danger';
-                } else if (severity === 'Medium') {
-                    return 'badge-warning';
-                } else if (severity === 'Low') {
-                    return 'badge-success';
-                } else {
-                    return 'badge-secondary';
-                }
+            if (severity === 'High') {
+                return 'badge-danger';
+            } else if (severity === 'Medium') {
+                return 'badge-warning';
+            } else if (severity === 'Low') {
+                return 'badge-success';
+            } else {
+                return 'badge-secondary';
             }
+        }
 
         // function to sort table
         function sortTable(n) {
@@ -346,6 +377,107 @@
 
                 });
         }
+
+        // function list all events
+        function listEvents() {
+
+            // show spinner
+            const spinner = document.querySelector('.spinner');
+            spinner.style.display = 'block';
+
+            fetch(`${apiUrl}/list-events`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+
+                    // append events to the events tab
+                    const eventsTab = document.getElementById('events');
+                    const tabContent = document.querySelectorAll('.tab-content');
+                    if (data[0].events.length === 0) {
+                        eventsTab.innerHTML = '<h3>No events found</h3>';
+                        eventsTab.style.backgroundColor = '#1f2428';
+                        spinner.style.display = 'none';
+                        return;
+                    }
+
+                    // add events to the events tab as a list of items (not ul)
+                    eventsTab.innerHTML = '';
+                    data[0].events.forEach(event => {
+                        const eventItem = document.createElement('div');
+                        eventItem.innerHTML = `
+                        <p><strong>Namespace:</strong> ${event.involved_object.namespace}</p>
+                        <p><strong>Name:</strong> ${event.involved_object.name}</p>
+                        <p><strong>Reason:</strong> ${event.reason}</p>
+                            <p><strong>Message:</strong> ${event.message}</p>
+                            <p><strong>Event Time:</strong> ${event.event_time}</p>
+                            <p><strong>Action:</strong> ${event.action}</p>
+                            <hr>
+                        `;
+                        const tabContent = document.querySelectorAll('.tab-content');
+                        eventItem.style.backgroundColor = '#1f2428';
+
+                        // make the .tab-content background color to white
+                        tabContent.forEach(content => {
+                            content.style.backgroundColor = '#1f2428';
+                            eventsTab.appendChild(eventItem);
+
+                            // Hide spinner
+                            spinner.style.display = 'none';
+
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error(error);
+
+                    // Hide spinner
+                    spinner.style.display = 'none';
+
+                });
+        }
+        // function to show tab content and make tab active on click
+        // and make tab color to green
+        function showTab(tabName) {
+
+            // Select the ul element with class "tabs"
+            const ulElement = document.querySelector('ul.tabs');
+
+            // Select all li elements under the ul element
+            const liElements = ulElement.querySelectorAll('li');
+
+            // Iterate over each li element and reset its background color to red
+            liElements.forEach(li => {
+                li.style.backgroundColor = '#045875';
+            });
+
+
+            const tab = document.getElementById(tabName);
+            if (tab) {
+                const tabs = document.querySelectorAll('.tab');
+                tabs.forEach(tab => {
+                    tab.style.backgroundColor = '#045875';
+                });
+                const tabContent = document.querySelectorAll('.tab-content');
+                tabContent.forEach(content => {
+                    content.style.display = 'none';
+                });
+                tab.style.display = 'block';
+                tab.style.backgroundColor = '#28a745';
+                document.querySelector(`.${tabName}`).style.backgroundColor = '#28a745';
+
+                if (tabName === 'recommendations') {
+                    getRecommendation();
+                }
+
+                if (tabName === 'events') {
+                    listEvents();
+                }
+
+            } else {
+                console.error(`Element with ID '${tabName}' not found.`);
+            }
+        }
+
     </script>
 </body>
 

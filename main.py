@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
 import json
+import subprocess
 
 # cors allow all
 from fastapi.middleware.cors import CORSMiddleware
@@ -112,6 +113,27 @@ PROMPT_TEMPLATE = """
     }
     """
 
+CHAT_PROMPT_TEMPLATE = """
+ As a DevOps engineer assistant, your task is to provide kubectl commands based on user input. You should deliver the command directly without explanations. For instance, if the user requests to see all pods, you should respond with the corresponding kubectl command to list all pods. If further details are necessary, prompt the user for additional information.
+ Your responses should adhere to the following guidelines:
+    Only provide the kubectl command in the response.
+    Omit any explanations.
+    Avoid enclosing the response in code blocks or formatting tags.
+    Maintain a coherent conversation flow by considering the chat history.
+    Prompt the user for more details when required to construct the complete command.
+    please provide the response in this format for example:
+    {   
+        "type": "command",
+        "command": "kubectl get pods"
+        "description": "This command will list all the pods in the current namespace"
+    } 
+
+    if you need more information from the user, please provide the response in this format for example:
+    {
+        "type": "question",
+        "question": "Please provide the namespace"
+    }
+"""
 # function to save the recommendations to the database
 def save_recommendations_to_db(recommendations):
     # get the database
@@ -185,7 +207,6 @@ async def get_recommendations():
         # return error message with status code 500
         return {"status": "error", "message": str(e)}, 500
 
-
 # dlete all the recommendations from the database
 @app.get("/delete-recommendations")
 async def delete_recommendations():
@@ -226,7 +247,6 @@ async def watch_deployment():
                     deployments_scanned += 1
                 else:
                     print(f"Deployment {i['metadata']['name']} has not been created in the last 5 minutes")
-
             return {
                 "status": "ok",
                 "message": f"{deployments_scanned} Deployments has been scanned"
@@ -235,7 +255,6 @@ async def watch_deployment():
         print(f"Error: {e}")
         # return error message with status code 500
         return {"status": "error", "message": str(e)}, 500
-
 
 # list all events from the namespace
 @app.get("/list-events")
@@ -258,6 +277,57 @@ async def list_events():
         # return error message with status code 500
         return {"status": "error", "message": str(e)}, 500
 
+# chat endpoint to make kube api request based on user input
+@app.post("/chat")
+async def chat(request: Request):
+    try:
+        # get the body from the request
+        request = await request.json()
+
+        # print the message to the console
+        print(f"User message: {request['message']}")
+
+        message_text = [
+            {
+                "role": "system",
+                "content": CHAT_PROMPT_TEMPLATE
+            },
+            {
+                "role": "user",
+                "content": f"{request['message']}"
+            }
+        ]
+        completion = openai_client.chat.completions.create(
+            model=os.getenv("MODEL_NAME"),
+            messages = message_text,
+            temperature=0.7,
+            max_tokens=int(os.getenv("MAX_TOKENS")),
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0,
+            )
+        if "type" in completion.choices[0].message.content:
+            if json.loads(completion.choices[0].message.content)["type"] == "command":
+                command = json.loads(completion.choices[0].message.content)["command"]
+                process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output, error = process.communicate()
+                if process.returncode == 0:
+                    print("Command executed successfully", output.decode("utf-8"))
+                    status = "ok"
+                else:
+                    print("Command failed:", error.decode("utf-8"))
+                    status = "error"
+                return {"status": status, "message": output.decode("utf-8")}, 200
+            
+            if json.loads(completion.choices[0].message.content)["type"] == "question":
+                return {"status": "ok", "message": json.loads(completion.choices[0].message.content)}, 200
+        else:
+            return {"status": "ok", "message": completion.choices[0].message.content}, 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        # return error message with status code 500
+        return {"status": "error", "message": str(e)}, 500
 
 # start the application
 if __name__ == "__main__":

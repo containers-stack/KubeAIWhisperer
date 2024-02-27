@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="description" content="KubeAIWhisperer">
+    <!-- set tab icon -->
+    <link rel="icon" href="./logo.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KubeAIWhisperer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -124,35 +127,78 @@
                 transform: rotate(360deg);
             }
         }
+
+        .chat-message-content-user {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: right;
+            color: black;
+        }
+
+        .chat-container{
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 500px;
+            padding: 20px;
+            background-color: #e4e4e4;
+            font-size: larger;
+            color: black;
+            overflow: auto;
+        }
+
+        .chat-input{
+            width: 98%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            margin-right: 10px;
+        }
+        #send-button{
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: #045875;
+            color: #fff;
+        }
+
+        .chat-footer{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            background-color: #e4e4e4;
+        }
     </style>
 </head>
 
 <body style="padding: 40px;">
 
-    <ul class="tabs">
-        <li class="recommendations" onclick="showTab('recommendations')">Recommendations</li>
-        <li class="events" onclick="showTab('events')">Events</li>
-        <li class="compliance" onclick="showTab('compliance')">Compliance Checks</li>
-    </ul>
-
     <div style="text-align: center;">
-        <img src="./logo.png" alt="" style="width: 100px; border-radius: 50%;">
-    </div>
-    <div style="display: flex; justify-content: space-between;">
-        <div>
-            <button class="button" style="background-color: #045875;" onclick="scanNow()" id="scanNow">Scan Now</button>
-            <button class="button" style="background-color: #28a745;margin-left: 40px;" onclick="getRecommendation()"
-                id="refreshButton">Refresh</button>
-        </div>
-        <button class="button" style="background-color: #bd1d1d;" onclick="deleteAll()" id="deleteAll">Delete
-            All</button>
-
+        <ul class="tabs" style="margin-left: -40px;">
+            <li class="recommendations" onclick="showTab('recommendations')">Recommendations</li>
+            <li class="events" onclick="showTab('events')">Events</li>
+            <li class="chatbot" onclick="showTab('chatbot')">Kube Bot</li>
+        </ul>
     </div>
 
-    <!-- Add a PIE chart graph using chart.js -->
 
     <div style="overflow: auto; max-height: 500px; margin-top: 30px;">
         <div id="recommendations" class="tab-content">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <button class="button" style="background-color: #045875;" onclick="scanNow()" id="scanNow">Scan
+                        Now</button>
+                    <button class="button" style="background-color: #28a745;margin-left: 40px;"
+                        onclick="getRecommendation()" id="refreshButton">Refresh</button>
+                </div>
+                <button class="button" style="background-color: #bd1d1d;" onclick="deleteAll()" id="deleteAll">Delete
+                    All</button>
+
+            </div>
             <table style="margin-top: 30px;">
                 <thead style="position: sticky; top: 0;">
                     <tr>
@@ -183,6 +229,9 @@
                             <i class="fas fa-sort"></i>
                             Description
                         </th>
+                        <th>
+                            implement
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -191,17 +240,35 @@
         </div>
     </div>
 
+    <!-- EVENTS -->
     <div id="events" class="tab-content" style="display: none;">
-        
-    </div>
-    <div id="compliance" class="tab-content" style="display: none;">
-        
     </div>
 
+    <!-- CHATBOT -->
+    <div id="chatbot" class="tab-content" style="display: none; border-radius: 5px;">
+        <div class="chat-container">
+            <div class="chat-body">
+                <div class="chat-messages">
+                    <div class="chat-message">
+                        <div class="chat-message-content">
+                            <p>Hi, I'm Kube Bot. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
+        </div>
+    </div>
+
+    <!-- SPINNER -->
     <div class="spinner"></div>
 
+    <!-- SCRIPTS -->
     <script>
 
+        const chat_history = [];
         const apiUrl = window.location.origin;
 
         getRecommendation();
@@ -233,6 +300,9 @@
                                     <td>${recommendation.Category}</td>
                                     <td><span class="badge ${getSeverityBadgeClass(recommendation.Severity)}">${recommendation.Severity}</span></td>
                                     <td>${recommendation.Description}</td>
+                                    <td>${recommendation.im}</td>
+
+                                    
                                     
                                 `;
                         tableBody.appendChild(newRow);
@@ -358,7 +428,6 @@
             const table = document.querySelector('table');
             spinner.style.display = 'block';
             table.style.display = 'none';
-            debugger
             fetch(`${apiUrl}/watch-deployment`)
                 .then(response => response.json())
                 .then(data => {
@@ -447,37 +516,102 @@
 
             // Iterate over each li element and reset its background color to red
             liElements.forEach(li => {
-                li.style.backgroundColor = '#045875';
-            });
-
-
-            const tab = document.getElementById(tabName);
-            if (tab) {
-                const tabs = document.querySelectorAll('.tab');
-                tabs.forEach(tab => {
-                    tab.style.backgroundColor = '#045875';
-                });
-                const tabContent = document.querySelectorAll('.tab-content');
-                tabContent.forEach(content => {
-                    content.style.display = 'none';
-                });
-                tab.style.display = 'block';
-                tab.style.backgroundColor = '#28a745';
-                document.querySelector(`.${tabName}`).style.backgroundColor = '#28a745';
-
-                if (tabName === 'recommendations') {
-                    getRecommendation();
+                if (li.className === tabName) {
+                    li.style.backgroundColor = '#28a745';
                 }
-
-                if (tabName === 'events') {
-                    listEvents();
-                }
-
-            } else {
-                console.error(`Element with ID '${tabName}' not found.`);
+                else
+                    li.style.backgroundColor = '#045875';
             }
+            );
+
+            const tabContent = document.querySelectorAll('.tab-content');
+            tabContent.forEach(content => {
+                if (content.id === tabName) {
+
+                    content.style.display = 'block';
+                }
+                else {
+
+                    content.style.display = 'none';
+                }
+            });
+            if (tabName === 'recommendations') {
+                getRecommendation();
+            }
+
+            if (tabName === 'events') {
+                listEvents();
+            }
+
+
+
         }
 
+        function send() {
+            const chatInput = document.getElementById('chat-input');
+            const chatMessages = document.querySelector('.chat-messages');
+            const chatMessage = document.createElement('div');
+            chatMessage.classList.add('chat-message');
+            chatMessage.innerHTML = `
+                <div class="chat-message-content-user">
+                    <p>${chatInput.value}</p>
+                </div>
+            `;
+            chatMessages.appendChild(chatMessage);
+            // scroll the chat-container to  bottom of the chat messages
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            chat_history.push(
+                    {
+                        "role": "user",
+                        "content": chatInput.value
+                    }
+                );
+            // send the message to the server
+            fetch(`${apiUrl}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: chat_history
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const chatMessage = document.createElement('div');
+                    chatMessage.classList.add('chat-message');
+                    var lines = data[0].message.split('\n');
+                    chatMessage.innerHTML = `
+                        <div class="chat-message-content">
+                        </div>
+                    `;
+                    // Loop through each line and create a <p> element for it
+                    lines.forEach(function(line) {
+                        chatMessage.querySelector('.chat-message-content').innerHTML += `<p>${line}</p>`;
+                    });
+                    chatMessages.appendChild(chatMessage);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    chat_history.push(
+                        {
+                            "role": "system",
+                            "content": data[0].message
+                        }
+                    );
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            chatInput.value = '';
+        }
+
+        // on enter key press
+        document.getElementById('chat-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                send();
+            }
+        });
     </script>
 </body>
 

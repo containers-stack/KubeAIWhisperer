@@ -23,6 +23,13 @@ KubeAIWhisperer is designed to provide real-time insights and recommendations fo
 
 - **Customizable Alerts**: Set up alerts based on specific criteria to stay informed about critical changes in your Kubernetes environment.
 
+- **Events List Feature for Kubernetes**: Now includes a feature to list events within your Kubernetes cluster, providing additional visibility into cluster activity.
+
+- **Kube Chat**: Introducing Kube Chat, a chatbot that interacts with users to execute kubectl commands based on user input using GPT models, enhancing the ease of managing your Kubernetes environment.
+
+<p align="center">
+  <img src="https://github.com/containers-stack/KubeAIWhisperer/blob/main/static/chat.png?raw=true" width="400">
+</p>
 ## Getting Started
 
 ### Prerequisites
@@ -68,3 +75,5 @@ To deploy KubeAIWhisperer, follow these steps:
 2. Install the deployment using:
    ```bash
    kubectl apply -f deployment.yaml
+```
+```

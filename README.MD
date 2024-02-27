@@ -76,4 +76,3 @@ To deploy KubeAIWhisperer, follow these steps:
    ```bash
    kubectl apply -f deployment.yaml
 ```
-```
